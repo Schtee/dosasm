@@ -32,19 +32,18 @@ class DOSHeader:
 
 		return s
 
-def read_header(path):
-	with open(path, 'rb') as f:
-		header = DOSHeader(f)
-
-	return header
-
 parser = argparse.ArgumentParser(description='Disasm a dos exe')
 parser.add_argument('exe_path')
 args = parser.parse_args()
 
-print(args)
-header = read_header(args.exe_path)
-#from pprint import pprint
-#pprint(vars(header))
-print(header)
+paragraph_size_in_bytes = 16
+page_size_in_bytes = 512
 
+with open(args.exe_path, 'rb') as f:
+	header = DOSHeader(f)
+	print(header)
+
+	f.seek(header.header_paragraphs * paragraph_size_in_bytes)
+	code_size = header.file_pages * page_size_in_bytes + header.last_page_size
+	code = f.read(code_size)
+	print(code)
