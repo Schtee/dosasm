@@ -1,25 +1,36 @@
 import argparse
 
+def read_word(f):
+	import struct
+	return struct.unpack('h', f.read(2))[0]
+
 class DOSHeader:
 	def __init__(self, f):
-		import struct
 		self.signature = f.read(2)
-		self.last_page_size = struct.unpack('h', f.read(2))[0]
-		self.file_pages = struct.unpack('h', f.read(2))[0]
-		self.relocation_item_count = struct.unpack('h', f.read(2))[0]
-		self.header_paragraphs = struct.unpack('h', f.read(2))[0]
-		self.minalloc = struct.unpack('h', f.read(2))[0]
-		self.maxalloc = struct.unpack('h',f.read(2))[0]
-		self.initial_ss_value = struct.unpack('h', f.read(2))[0]
-		self.initial_sp_value = struct.unpack('h', f.read(2))[0]
-		self.checksum = struct.unpack('h', f.read(2))[0]
-		self.initial_ip_value = struct.unpack('h', f.read(2))[0]
-		self.initial_cs_value = struct.unpack('h', f.read(2))[0] # this is pre-relocation
-		self.relocation_table_offset = struct.unpack('h', f.read(2))[0]
-		self.overlay_number = struct.unpack('h', f.read(2))[0]
+		self.last_page_size = read_word(f)
+		self.file_pages = read_word(f)
+		self.relocation_item_count = read_word(f)
+		self.header_paragraphs = read_word(f)
+		self.minalloc = read_word(f)
+		self.maxalloc = read_word(f)
+		self.initial_ss_value = read_word(f)
+		self.initial_sp_value = read_word(f)
+		self.checksum = read_word(f)
+		self.initial_ip_value = read_word(f)
+		self.initial_cs_value = read_word(f) # this is pre-relocation
+		self.relocation_table_offset = read_word(f)
+		self.overlay_number = read_word(f)
+		self.relocation_table = []
+		f.seek(self.relocation_table_offset)
+		for i in range(0, self.relocation_item_count):
+			self.relocation_table.append({ 'offset': read_word(f), 'segment_address': read_word(f) })
 
 	def __str__(self):
-		return 'Signature: {0}\nLast page size: {1}\nFile pages: {2}\nRelocation item count: {3}\nHeader  paragraphs: {4}\nMinalloc: {5}\nMaxalloc: {6}\nInitial SS value: {7}\nInitial SP value: {8}\nChecksum: {9}\nInitial IP value:{10}\nInitial CS value (pre-relocation: {11}\nRelocation table offset: {12}\nOverlay number: {13}'.format(self.signature, self.last_page_size, self.file_pages, self.relocation_item_count, self.header_paragraphs, self.minalloc, self.maxalloc, self.initial_ss_value, self.initial_sp_value, self.checksum, self.initial_ip_value, self.initial_cs_value, self.relocation_table_offset, self.overlay_number)
+		s = 'Signature: {0}\nLast page size: {1}\nFile pages: {2}\nRelocation item count: {3}\nHeader  paragraphs: {4}\nMinalloc: {5}\nMaxalloc: {6}\nInitial SS value: {7}\nInitial SP value: {8}\nChecksum: {9}\nInitial IP value:{10}\nInitial CS value (pre-relocation): {11}\nRelocation table offset: {12}\nOverlay number: {13}\nRelocation table:\n'.format(self.signature, self.last_page_size, self.file_pages, self.relocation_item_count, self.header_paragraphs, self.minalloc, self.maxalloc, self.initial_ss_value, self.initial_sp_value, self.checksum, self.initial_ip_value, self.initial_cs_value, self.relocation_table_offset, self.overlay_number)
+		for i in self.relocation_table:
+			s += '\tOffset: {0}\n\tSegment address: {1}'.format(i['offset'], i['segment_address'])
+
+		return s
 
 def read_header(path):
 	with open(path, 'rb') as f:
