@@ -63,8 +63,8 @@ print(code)
 from disassembler import Disassembler
 
 d = Disassembler(code, 0x100)
-d.disasm(0x100)
-d.write('./out.asm')
+d.disasm(0x100, 0)
+d.write('./out.s')
 
 '''
 from capstone import *
