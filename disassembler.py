@@ -42,14 +42,23 @@ class Disassembler:
 					print('returned with call stack depth 0 at 0x%x' %(i.address))
 				return
 
+	def write_asm(self, label, code, f):
+		out = '%s\t%s\n' %(label, code)
+		f.write(out)
+
 	def write_insn(self, i, label, f, op_override = None):
 		bytes = ''.join('{:02x}'.format(x) for x in i.bytes)
 		label = label if label == '' else label + ':'
 		op_str = op_override if op_override != None else i.op_str
-		#out = '%s\t%s\t%s\t;0x%x\t%s\n' %(label, i.mnemonic, op_str, i.address, bytes)
-		out = '%s\t%s\t%s\n' %(label, i.mnemonic, op_str)
-		out.replace('\0', '')
-		f.write(out)
+		out = '%s\t%s # 0x%x\t%s' %(i.mnemonic, op_str, i.address, bytes)
+		self.write_asm(label, out, f)
+
+	def write_int(self, i, label, f):
+		f.write('# replacing %s %s\n' %(i.mnemonic, i.op_str))
+		# Linux 64 calling convention = params in 64 bit gprs
+		self.write_asm('', 'mov rdi, 0x%02x' %(i.operands[0].value.imm), f)
+		self.write_asm('', 'movzx rsi, ax', f)
+		self.write_asm('', 'call int_sim', f)
 
 	def write_jump(self, i, label, f):
 		target = i.operands[0].value.imm
@@ -67,6 +76,8 @@ class Disassembler:
 				label = self.labels[i.address] if i.address in self.labels else ''
 				if CS_GRP_JUMP in i.groups:
 					self.write_jump(i, label, f)
+				elif CS_GRP_INT in i.groups:
+					self.write_int(i, label, f)
 				else:
 					self.write_insn(i, label, f)
 				#f.write('%s\t%s\t;0x%x\t%s\n' %(i.mnemonic, i.op_str, i.address, bytes))
