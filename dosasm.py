@@ -6,8 +6,9 @@ def read_word(f):
 
 class DOSHeader:
 	def __init__(self, f):
-		self.signature = f.read(2)
-		if not self.is_mz():
+		self.signature = f.read(2).decode('ascii')
+		if not self.is_mz:
+			print('Assuming com file (first 2 bytes: %s)' %self.signature)
 			return
 
 		self.last_page_size = read_word(f)
@@ -28,6 +29,7 @@ class DOSHeader:
 		for i in range(0, self.relocation_item_count):
 			self.relocation_table.append({ 'offset': read_word(f), 'segment_address': read_word(f) })
 
+	@property
 	def is_mz(self):
 		return self.signature == 'MZ'
 
@@ -48,22 +50,26 @@ page_size_in_bytes = 512
 with open(args.exe_path, 'rb') as f:
 	header = DOSHeader(f)
 
-	if header.is_mz():
+	if header.is_mz:
 		print(header)
 		offset = header.header_paragraphs * paragraph_size_in_bytes
 		f.seek(offset)
 		code_size = header.file_pages * page_size_in_bytes + header.last_page_size
 		code = f.read(code_size)
+		offset = 0
+		entry_point = header.initial_cs_value * 0x10 + header.initial_ip_value
 	else:
 		f.seek(0)
 		code = f.read()
+		offset = 0x100
+		entry_point = 0x100
 
-print(code)
+print('Executable at offset %s, entry point %s' %(hex(offset), hex(entry_point)))
 
 from disassembler import Disassembler
 
-d = Disassembler(code, 0x100)
-d.disasm(0x100, 0)
+d = Disassembler(code, offset, args.exe_path, Disassembler.TargetBits.x32)
+d.disasm(entry_point, 0)
 d.write('./out.s')
 
 '''
