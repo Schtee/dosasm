@@ -1,7 +1,7 @@
 from capstone import *
 from capstone.x86_const import *
 from enum import IntEnum
-from . import CFG
+from cfg import *
 
 class Disassembler:
 	class TargetBits(IntEnum):
@@ -42,6 +42,8 @@ class Disassembler:
 
 		is_fallthrough = False
 		was_call = False
+
+		code = self.all_code[ip - self.offset:]
 
 		for i in self.md.disasm(code, self.offset + ip - self.offset):
 			if i.address in self.insns:

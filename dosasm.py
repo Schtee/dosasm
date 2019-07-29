@@ -72,7 +72,7 @@ with open('out.exe.stripped', 'wb') as f:
 from disassembler import Disassembler
 
 d = Disassembler(code, offset, args.exe_path, header, Disassembler.TargetBits.x32)
-d.disasm(entry_point, 0)
+d.disasm(entry_point)
 d.write('./out.s')
 
 '''
