@@ -12,3 +12,8 @@ NOW working: 64 bit build with interrupt stub
 * Can just use default `as` and `gcc` calls as now generating for native arch
 * Need to use custom `ld` call: `ld -lc -dynamic-linker /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 ./out.o ./util.o` for reasons I don't completely understand
 
+Now working on 32 bit
+How to handle segments?
+Define a workspace in assembly
+Set stack pointer to offset calculated from initial SS value from MZ header
+Strip ss: segmented addresses to just be offsets from SP

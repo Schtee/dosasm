@@ -41,7 +41,7 @@ void int21(uint8_t ah, struct Registers *r)
 
 		// Get DOS version. Let's be 7.00!
 		case 0x30:
-			r->ax = 0x0700;
+			r->ax = 0x0007;
 			// BH = MS-DOS OEM number if DOS 5+ and AL=01h or1 version flag bit 3: DOS is in ROM other: reserved (0)
 			// 24 bit serial number in BL:CX
 			r->bx = 0;

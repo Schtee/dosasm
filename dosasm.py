@@ -34,7 +34,7 @@ class DOSHeader:
 		return self.signature == 'MZ'
 
 	def __str__(self):
-		s = 'Signature: {0}\nLast page size: {1}\nFile pages: {2}\nRelocation item count: {3}\nHeader  paragraphs: {4}\nMinalloc: {5}\nMaxalloc: {6}\nInitial SS value: {7}\nInitial SP value: {8}\nChecksum: {9}\nInitial IP value:{10}\nInitial CS value (pre-relocation): {11}\nRelocation table offset: {12}\nOverlay number: {13}\nRelocation table:\n'.format(self.signature, self.last_page_size, self.file_pages, self.relocation_item_count, self.header_paragraphs, self.minalloc, self.maxalloc, self.initial_ss_value, self.initial_sp_value, self.checksum, self.initial_ip_value, self.initial_cs_value, self.relocation_table_offset, self.overlay_number)
+		s = 'Signature: {0}\nLast page size: {1}\nFile pages: {2}\nRelocation item count: {3}\nHeader  paragraphs: {4}\nMinalloc: {5}\nMaxalloc: {6}\nInitial SS value: {7}\nInitial SP value: {8}\nChecksum: {9}\nInitial IP value:{10}\nInitial CS value (pre-relocation): {11}\nRelocation table offset: {12}\nOverlay number: {13}\nRelocation table:\n'.format(self.signature, hex(self.last_page_size), self.file_pages, self.relocation_item_count, self.header_paragraphs, self.minalloc, self.maxalloc, hex(self.initial_ss_value), hex(self.initial_sp_value), self.checksum, hex(self.initial_ip_value), hex(self.initial_cs_value), hex(self.relocation_table_offset), self.overlay_number)
 		for i in self.relocation_table:
 			s += '\tOffset: {0}\n\tSegment address: {1}'.format(i['offset'], i['segment_address'])
 
@@ -66,9 +66,12 @@ with open(args.exe_path, 'rb') as f:
 
 print('Executable at offset %s, entry point %s' %(hex(offset), hex(entry_point)))
 
+with open('out.exe.stripped', 'wb') as f:
+	f.write(code)
+
 from disassembler import Disassembler
 
-d = Disassembler(code, offset, args.exe_path, Disassembler.TargetBits.x32)
+d = Disassembler(code, offset, args.exe_path, header, Disassembler.TargetBits.x32)
 d.disasm(entry_point, 0)
 d.write('./out.s')
 

@@ -10,7 +10,7 @@ class Disassembler:
 	entry_point_label = '_start'
 	loops = [ X86_INS_LOOP, X86_INS_LOOPE, X86_INS_LOOPNE ]
 
-	def __init__(self, code, offset, exe_file, bits):
+	def __init__(self, code, offset, exe_file, header, bits):
 		self.all_code = code
 		self.offset = offset
 		self.insns = {} # stored by original address
@@ -18,6 +18,7 @@ class Disassembler:
 		self.call_depth = 0
 		self.entry_point = None
 		self.exe_file = exe_file
+		self.header = header
 		self.bits = bits
 
 		self.md = Cs(CS_ARCH_X86, CS_MODE_16)
@@ -142,4 +143,7 @@ class Disassembler:
 					self.write_insn(i, label, f)
 				#f.write('%s\t%s\t;0x%x\t%s\n' %(i.mnemonic, i.op_str, i.address, bytes))
 
-			f.write('\n.section .data\nexe:\n.org %s\n.incbin "%s"' %(self.offset, self.exe_file))
+#f.write('\n.section .data\nexe:\n.org %s\n.incbin "%s"' %(self.offset, self.exe_file))
+				load_module_size = (self.header.file_pages * 512) + self.header.last_page_size - (self.header.header_paragraphs * 16)
+
+			f.write('\n.section .data\npsp:\n.byte 00, 00\n.word 0x9FFF\n.org 0x100\n.global _exe\n_exe:\n.incbin "out.exe.stripped"\n.org %d\nss_sim: .word 0\nes_sim: .word 0\nds_sim: .word 0' %(load_module_size))
