@@ -1,6 +1,7 @@
 from capstone import *
 from capstone.x86_const import *
 from enum import IntEnum
+from . import CFG
 
 class Disassembler:
 	class TargetBits(IntEnum):
@@ -23,7 +24,41 @@ class Disassembler:
 
 		self.md = Cs(CS_ARCH_X86, CS_MODE_16)
 		self.md.detail = True
+
+	def process_jump(self, i, call_depth):
+		self.disasm_internal(i.operands[0].value.imm, i.address, call_depth)
+
+	def process_call(self, i, call_depth):
+		self.disasm_internal(i.operands[0].value.imm, i.address, call_depth + 1)
+
+	def disasm(self, ip):
+		self.boundaries = CFG.Boundaries()
+		self.disasm_internal(ip, None)
 	
+	def disasm_internal(self, ip, source, call_depth = 0):
+		self.boundaries.add_edge(source, ip)
+
+		is_fallthrough = False
+
+		for i in self.md.disasm(code, self.offset + ip - self.offset):
+			if i.address in self.insns:
+				return
+
+			self.insns[i.address] = i
+
+			if is_fallthrough:
+				self.boundaries.add_edge(last_address, i.address)
+			
+			if CS_GRP_JUMP in i.groups:
+				self.process_jump(i, call_depth)
+				# code after unconditional is unreachable, so stop
+				if i.mnemonic.lower == 'jmp':
+					return
+				else:
+					is_fallthrough = True
+
+			last_address = i.address
+'''
 	def process_jump(self, i, call_depth):
 		target = i.operands[0].value.imm
 		self.disasm(target, call_depth)
@@ -37,6 +72,7 @@ class Disassembler:
 		self.disasm(target, call_depth)
 
 	def disasm(self, ip, call_depth = 0):
+		
 		if ip in self.labels:
 			return
 
