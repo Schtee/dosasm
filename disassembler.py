@@ -34,11 +34,14 @@ class Disassembler:
 	def disasm(self, ip):
 		self.boundaries = CFG.Boundaries()
 		self.disasm_internal(ip, None)
+
+		print(self.boundaries)
 	
 	def disasm_internal(self, ip, source, call_depth = 0):
 		self.boundaries.add_edge(source, ip)
 
 		is_fallthrough = False
+		was_call = False
 
 		for i in self.md.disasm(code, self.offset + ip - self.offset):
 			if i.address in self.insns:
@@ -56,6 +59,18 @@ class Disassembler:
 					return
 				else:
 					is_fallthrough = True
+
+			elif CS_GRP_CALL in i.groups:
+				was_call = True
+				self.process_call(i, call_depth)
+
+			elif CS_GRP_RET in i.groups:
+				if call_depth == 0:
+					print('returned with call stack depth 0 at 0x%x' %(i.address))
+				return
+
+			elif i.id in Disassembler.loops:
+				self.process_jump(i, call_depth)
 
 			last_address = i.address
 '''
@@ -183,3 +198,4 @@ class Disassembler:
 				load_module_size = (self.header.file_pages * 512) + self.header.last_page_size - (self.header.header_paragraphs * 16)
 
 			f.write('\n.section .data\npsp:\n.byte 00, 00\n.word 0x9FFF\n.org 0x100\n.global _exe\n_exe:\n.incbin "out.exe.stripped"\n.org %d\nss_sim: .word 0\nes_sim: .word 0\nds_sim: .word 0' %(load_module_size))
+			'''
