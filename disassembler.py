@@ -25,21 +25,21 @@ class Disassembler:
 		self.md = Cs(CS_ARCH_X86, CS_MODE_16)
 		self.md.detail = True
 
-	def process_jump(self, i, call_depth):
-		self.disasm_internal(i.operands[0].value.imm, i, call_depth)
+	def process_jump(self, i, gen, call_depth):
+		self.disasm_internal(i.operands[0].value.imm, i, gen, call_depth)
 
-	def process_call(self, i, call_depth):
-		self.disasm_internal(i.operands[0].value.imm, i, call_depth + 1)
+	def process_call(self, i, gen, call_depth):
+		self.disasm_internal(i.operands[0].value.imm, i, gen, call_depth + 1)
 
 	def disasm(self, ip):
-		self.gen = CFG.Generator()
-		self.disasm_internal(ip, None)
+		gen = CFG.Generator()
+		self.disasm_internal(ip, None, gen)
 
-		print(self.gen)
+		self.cfg = gen.generate(self.insns)
 	
-	def disasm_internal(self, ip, source_insn, call_depth = 0):
+	def disasm_internal(self, ip, source_insn, gen, call_depth = 0):
 		#print('Visiting %s' %hex(ip))
-		self.gen.add_edge(source_insn, ip)
+		gen.add_edge(source_insn, ip)
 
 		is_fallthrough = False
 		last_insn = None
@@ -54,11 +54,11 @@ class Disassembler:
 			self.insns[i.address] = i
 
 			if is_fallthrough:
-				self.gen.add_edge(last_insn, i.address)
+				gen.add_edge(last_insn, i.address)
 				is_fallthrough = False
 			
 			if CS_GRP_JUMP in i.groups:
-				self.process_jump(i, call_depth)
+				self.process_jump(i, gen, call_depth)
 				# code after unconditional is unreachable, so stop
 				if i.mnemonic.lower() == 'jmp':
 					return
@@ -67,7 +67,7 @@ class Disassembler:
 
 			elif CS_GRP_CALL in i.groups:
 				was_call = True
-				self.process_call(i, call_depth)
+				self.process_call(i, gen, call_depth)
 
 			elif CS_GRP_RET in i.groups:
 				if call_depth == 0:
@@ -75,6 +75,14 @@ class Disassembler:
 				return
 
 			elif i.id in Disassembler.loops:
-				self.process_jump(i, call_depth)
+				self.process_jump(i, gen, call_depth)
 
 			last_insn = i
+
+	def write(self, path):
+		with open(path, 'w') as f:
+			for block in self.cfg.blocks:
+				f.write('%s:\n' %block.label)
+
+				for i in block.insns:
+					f.write('%s %s # 0x%x\n' %(i.mnemonic, i.op_str, i.address))

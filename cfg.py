@@ -8,12 +8,36 @@ class CFG:
             self.boundaries = []
 
         def add_edge(self, source_insn, destination):
-            if source_insn != None:
+            if source_insn == None:
+                self.entry_point = destination
+            else:
                 end = source_insn.address + source_insn.size
                 self.boundaries.append(end)
             if not destination in self.boundaries:
                 self.boundaries.append(destination)
             self.edges.append(CFG.Edge(None if source_insn == None else source_insn.address, destination))
+
+        def generate(self, insns):
+            addresses = sorted(insns)
+
+            current_block = None
+
+            blocks = []
+
+            for a in addresses:
+                i = insns[a]
+                # current_block is None for first insn (i.e. first insn)
+                if current_block == None or a in self.boundaries:
+                    if a == self.entry_point:
+                        label = 'start'
+                    else:
+                        label = 'label_%x' %a
+                    current_block = CFG.BasicBlock(label)
+                    blocks.append(current_block)
+
+                current_block.insns.append(i)
+
+            return CFG(blocks)
 
         def __str__(self):
             return 'Boundaries: %s' %CFG.addresses_to_string(self.boundaries)
@@ -24,19 +48,9 @@ class CFG:
             self.destination = destination
 
     class BasicBlock:
-        def __init__(self, label, entry_point):
+        def __init__(self, label):
             self.label = label
-            self.entry_point = entry_point
-            self.exit_point = None
-            self.destinations = []
+            self.insns = []
 
-        def add_destination(self, destination):
-            self.destinations.push(destination)
-    
-
-    def __init__(self):
-        self.basic_blocks = {} # stored by entry point
-        self.entry_point = None
-
-    def add_basic_block(self, block):
-        self.basic_blocks.append(block)
+    def __init__(self, blocks):
+        self.blocks = blocks
