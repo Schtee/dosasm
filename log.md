@@ -17,3 +17,7 @@ How to handle segments?
 Define a workspace in assembly
 Set stack pointer to offset calculated from initial SS value from MZ header
 Strip ss: segmented addresses to just be offsets from SP
+
+All this feels like a log of bother. It'd be great if we could use constant folding/similar to convert addresses to linear at build time
+
+First step: CFG
