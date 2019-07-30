@@ -38,7 +38,7 @@ class Disassembler:
 		print(self.boundaries)
 	
 	def disasm_internal(self, ip, source, call_depth = 0):
-		print('Visiting %s' %hex(ip))
+		#print('Visiting %s' %hex(ip))
 		self.boundaries.add_edge(source, ip)
 
 		is_fallthrough = False
