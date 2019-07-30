@@ -79,10 +79,28 @@ class Disassembler:
 
 			last_insn = i
 
+	def write_line(f, mnemonic, op_str, address):
+		f.write('%s %s # 0x%x\n' %(mnemonic, op_str, address))
+
+	def should_label_op(i):
+		return (CS_GRP_JUMP in i.groups or CS_GRP_CALL in i.groups or i.id in Disassembler.loops) and i.operands[0].type == X86_OP_IMM
+
+	def get_op_str(self, i):
+		if not Disassembler.should_label_op(i):
+			return i.op_str
+		target = i.operands[0].imm
+		if target in self.cfg.blocks:
+			return self.cfg.blocks[target].label
+		else:
+			raise Exception('No block starting at 0x%x' %target)
+
 	def write(self, path):
 		with open(path, 'w') as f:
-			for block in self.cfg.blocks:
+			for entry in self.cfg.blocks:
+				block = self.cfg.blocks[entry]
 				f.write('%s:\n' %block.label)
 
 				for i in block.insns:
-					f.write('%s %s # 0x%x\n' %(i.mnemonic, i.op_str, i.address))
+					op_str = self.get_op_str(i)
+
+					Disassembler.write_line(f, i.mnemonic, op_str, i.address)

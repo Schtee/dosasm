@@ -22,7 +22,7 @@ class CFG:
 
             current_block = None
 
-            blocks = []
+            blocks = {}
 
             for a in addresses:
                 i = insns[a]
@@ -33,7 +33,7 @@ class CFG:
                     else:
                         label = 'label_%x' %a
                     current_block = CFG.BasicBlock(label)
-                    blocks.append(current_block)
+                    blocks[a] = current_block
 
                 current_block.insns.append(i)
 
