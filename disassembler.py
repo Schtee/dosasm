@@ -38,6 +38,7 @@ class Disassembler:
 		print(self.boundaries)
 	
 	def disasm_internal(self, ip, source, call_depth = 0):
+		print('Visiting %s' %hex(ip))
 		self.boundaries.add_edge(source, ip)
 
 		is_fallthrough = False
@@ -53,11 +54,12 @@ class Disassembler:
 
 			if is_fallthrough:
 				self.boundaries.add_edge(last_address, i.address)
+				is_fallthrough = False
 			
 			if CS_GRP_JUMP in i.groups:
 				self.process_jump(i, call_depth)
 				# code after unconditional is unreachable, so stop
-				if i.mnemonic.lower == 'jmp':
+				if i.mnemonic.lower() == 'jmp':
 					return
 				else:
 					is_fallthrough = True
