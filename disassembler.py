@@ -80,7 +80,7 @@ class Disassembler:
 			last_insn = i
 
 	def write_line(f, mnemonic, op_str, address):
-		f.write('%s %s # 0x%x\n' %(mnemonic, op_str, address))
+		f.write('\t%s %s # 0x%x\n' %(mnemonic, op_str, address))
 
 	def should_label_op(i):
 		return (CS_GRP_JUMP in i.groups or CS_GRP_CALL in i.groups or i.id in Disassembler.loops) and i.operands[0].type == X86_OP_IMM
