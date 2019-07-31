@@ -37,19 +37,8 @@ class Disassembler:
 
 		self.cfg = gen.generate(self.insns)
 
-		self.find_const_int21s()
+		return self.cfg
 
-	def find_const_int21s(self):
-		for a in self.cfg.blocks:
-			block = self.cfg.blocks[a]
-			last_ah_val = None
-			for i in block.insns:
-				if i.id == X86_INS_MOV and i.reg_write(X86_REG_AH) and i.operands[0].value.imm:
-					print("0x%x modifies ah" %i.address)
-
-				if i.id == X86_INS_INT and i.operands[0].value.imm == 0x21:
-					print('Found int 21...')
-	
 	def disasm_internal(self, ip, source_insn, gen, call_depth = 0):
 		#print('Visiting %s' %hex(ip))
 		gen.add_edge(source_insn, ip)

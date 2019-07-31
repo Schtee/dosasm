@@ -1,5 +1,7 @@
 import argparse
 
+from moderniser import *
+
 def read_word(f):
 	import struct
 	return struct.unpack('h', f.read(2))[0]
@@ -72,42 +74,8 @@ with open('out.exe.stripped', 'wb') as f:
 from disassembler import Disassembler
 
 d = Disassembler(code, offset, args.exe_path, header, Disassembler.TargetBits.x32)
-d.disasm(entry_point)
+cfg = d.disasm(entry_point)
 d.write('./out.s')
 
-'''
-from capstone import *
-
-md = Cs(CS_ARCH_X86, CS_MODE_16)
-md.detail = True
-
-ip = 0x100
-
-entry_points = []
-
-def disasm(all_code, subcode, ip, f):
-	if ip in entry_points:
-		return
-	else:
-		print('New entry point 0x%x' %(ip))
-		entry_points.append(ip)
-
-	for i in md.disasm(subcode, ip):
-		print('0x%x: \t%s\t%s\t%s' %(i.address, ''.join('{:02x}'.format(x) for x in i.bytes), i.mnemonic, i.op_str))
-		f.write(i.mnemonic + '\t' + i.op_str)
-		if CS_GRP_JUMP in i.groups:
-			print('Got a jump')
-			target = i.operands[0].value.imm
-			disasm(all_code, all_code[target-0x100:], target, f)
-			return
-
-with open('out.asm', 'w') as f:
-	disasm(code, code, ip, f)
-	for i in md.disasm(code, 0x100, 1):
-		target = i.operands[0].value.imm
-		print('0x%x' %(target))
-		subs = code[target-0x100:]
-
-	for i in md.disasm(subs, target, 1):
-		print('0x%x: \t%s\t%s' %(i.address, i.mnemonic, i.op_str))
-'''
+moderniser = Moderniser(cfg)
+moderniser.find_const_int21s()
