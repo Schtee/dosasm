@@ -22,11 +22,18 @@ class Moderniser:
 						regs.set_val(r, None)
 
 				if i.id == X86_INS_INT and i.operands[0].value.imm == 0x21:
-					val = regs.get_val(X86_REG_AH)
-					if val == None:
+					ah = regs.get_val(X86_REG_AH)
+					if ah == None:
 						print('Got int 21 with unknown AX at %s' %hex(i.address))
 					else:
-						print('Found int 21. tracked ah as: %s' %hex(val))
-						if val == 0x30:
-							print(regs.get_val(X86_REG_BX))
-	
+						self.handle_int21(ah)
+
+	def handle_int21(self, ah):
+		# DOS version
+		if ah == 0x30:
+			# AL = major version number (00h if DOS 1.x)
+			# AH = minor version number
+			# BL:CX = 24-bit user serial number (most versions do not use this) if DOS <5 or AL=00h
+			# BH = MS-DOS OEM number if DOS 5+ and AL=01h
+			# BH = version flag bit 3: DOS is in ROM other: reserved (0)
+			print('Should add set registers for dos version instructions')
